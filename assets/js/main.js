@@ -26,9 +26,9 @@ function formatIDR(n) {
 
 /* Shared color choices for announcement dots (bg/fg pairs) */
 const ANN_COLORS = {
-  mustard: { bg: 'var(--accent-mustard)', fg: '#4a3410', label: 'Kuning' },
-  sage:    { bg: 'var(--accent-sage)',    fg: '#1d3527', label: 'Hijau' },
-  coral:   { bg: 'var(--accent-coral)',   fg: '#ffffff', label: 'Merah Muda' }
+  mustard: { bg: 'var(--accent-mustard)', fg: '#3B4A12', label: 'Kuning' },
+  sage:    { bg: 'var(--accent-sage)',    fg: '#0B2B22', label: 'Hijau' },
+  coral:   { bg: 'var(--accent-danger)',  fg: '#ffffff', label: 'Merah Muda' }
 };
 function annColor(key) { return ANN_COLORS[key] || ANN_COLORS.mustard; }
 
