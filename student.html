@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Siswa — Kas Kelas</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="app-header">
+    <p class="greet">Halo, <b id="greetName">Siswa</b></p>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="toggleTheme()"><span id="themeToggleIcon"></span></button>
+      <button class="icon-btn" title="Notifikasi"><span class="ic-bell"></span></button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+    <div class="main-scroll">
+      <div class="content-columns">
+        <div style="flex:1; min-width:0;">
+
+          <!-- OVERVIEW -->
+          <section class="view-section" id="view-overview">
+            <div class="status-card" id="statusCard">
+              <div class="status-icon"><span class="ic-status"></span></div>
+              <div>
+                <h3 id="statusTitle">Memuat status…</h3>
+                <p id="statusDesc">Mohon tunggu.</p>
+              </div>
+            </div>
+
+            <div class="hero-banner">
+              <div class="label">Saldo Kas Kelas</div>
+              <div class="amount" id="heroBalance">Rp0</div>
+              <div class="sub-row">
+                <span>Kelas<b id="heroClass">—</b></span>
+                <span>Iuran / Minggu<b>Rp5.000</b></span>
+              </div>
+            </div>
+
+            <div class="section-title">Riwayat Iuran Saya <span class="tag">6 minggu terakhir</span></div>
+            <div class="hscroll" id="scheduleRow"></div>
+
+            <div class="section-title">Pengumuman &amp; Agenda Kelas</div>
+            <div class="event-list" id="eventList"></div>
+          </section>
+
+          <!-- HISTORY -->
+          <section class="view-section" id="view-history">
+            <div class="section-title mt-0">Riwayat Transaksi Kelas</div>
+            <p class="secondary" style="font-size:13px; margin-top:-6px;">Tampilan hanya-lihat untuk seluruh siswa.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tanggal</th><th>Kategori</th><th>Keterangan</th><th>Jenis</th><th>Jumlah</th></tr></thead>
+                <tbody id="txBody"></tbody>
+              </table>
+            </div>
+
+            <div class="section-title">Status Iuran Mingguan Saya</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Minggu</th><th>Nominal</th><th>Status</th><th>Tgl Bayar</th></tr></thead>
+                <tbody id="myWeeklyBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ACCOUNT -->
+          <section class="view-section" id="view-account">
+            <div class="section-title mt-0">Akun Saya</div>
+            <div class="panel profile-card">
+              <div class="avatar" id="avatarInitial">S</div>
+              <div>
+                <h4 id="profileName">—</h4>
+                <span id="profileEmail">—</span>
+              </div>
+            </div>
+            <div class="panel" style="padding:6px 16px;">
+              <button class="menu-row" onclick="openModal('pwModal')"><span class="navicon"></span>Ubah Kata Sandi</button>
+              <button class="menu-row" onclick="doLogout()"><span class="navicon"></span>Keluar</button>
+            </div>
+          </section>
+
+        </div>
+
+        <aside class="right-panel">
+          <div class="panel">
+            <h4>Status Saya</h4>
+            <div class="stat-row"><span>Minggu Ini</span><b id="rpThisWeek">—</b></div>
+            <div class="stat-row"><span>Total Sudah Bayar</span><b id="rpPaidTotal">0</b></div>
+            <div class="stat-row"><span>Total Belum Bayar</span><b id="rpUnpaidTotal">0</b></div>
+          </div>
+          <div class="panel">
+            <h4>Tips Menabung 🍂</h4>
+            <p class="secondary" style="font-size:13px; line-height:1.5;">Sisihkan uang saku untuk iuran kelas di awal minggu supaya tidak lupa membayar.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" id="bottomNav"></nav>
+  </div>
+</div>
+
+<!-- Change password modal -->
+<div class="modal-overlay" id="pwModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Ubah Kata Sandi</h3><button class="modal-close" onclick="closeModal('pwModal')"><span class="ic-x"></span></button></div>
+    <form id="pwForm">
+      <div class="form-grid">
+        <div class="full"><label>Kata Sandi Baru</label><input type="password" id="newPw" minlength="4" required></div>
+        <div class="full"><label>Konfirmasi Kata Sandi</label><input type="password" id="confirmPw" minlength="4" required></div>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:16px;">Simpan Kata Sandi</button>
+    </form>
+  </div>
+</div>
+
+<script src="assets/js/api.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+(async function main() {
+const user = await requireAuth('student');
+if (!user) return;
+
+document.getElementById('greetName').textContent = user.name.split(' ')[0];
+document.getElementById('themeToggleIcon').innerHTML =
+  document.documentElement.getAttribute('data-theme') === 'dark' ? ICONS.sun : ICONS.moon;
+document.getElementById('profileName').textContent = user.name;
+document.getElementById('profileEmail').textContent = user.email;
+document.getElementById('avatarInitial').textContent = user.name.charAt(0);
+document.getElementById('heroClass').textContent = user.class;
+
+renderNav('overview', 'student');
+
+const myWeekly = DB.weeklyForStudent(user.id);
+const currentEntry = myWeekly[0];
+
+function renderStatusCard() {
+  const card = document.getElementById('statusCard');
+  const isPaid = currentEntry && currentEntry.status === 'paid';
+  card.classList.add(isPaid ? 'paid' : 'unpaid');
+  document.querySelector('#statusCard .ic-status').innerHTML = isPaid ? ICONS.check : ICONS.bell;
+  document.getElementById('statusTitle').textContent = isPaid ? 'Iuran minggu ini sudah lunas' : 'Iuran minggu ini belum dibayar';
+  document.getElementById('statusDesc').textContent = isPaid
+    ? `Terima kasih! Kamu sudah membayar ${formatIDR(currentEntry.amount)} untuk minggu ${currentEntry.week}.`
+    : `Kamu belum membayar iuran ${formatIDR(currentEntry ? currentEntry.amount : 5000)} untuk minggu ${currentEntry ? currentEntry.week : 'ini'}. Segera bayar ke bendahara kelas.`;
+}
+
+function renderOverview() {
+  const tx = DB.getTransactions();
+  const income = tx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = tx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  document.getElementById('heroBalance').textContent = formatIDR(income - expense);
+
+  document.getElementById('scheduleRow').innerHTML = myWeekly.map(e => {
+    const d = new Date(e.weekDate);
+    return `<div class="schedule-card">
+      <div class="dow">${e.week}</div>
+      <div class="date">${d.getDate()}/${d.getMonth() + 1}</div>
+      <div class="desc">Iuran kas mingguan</div>
+      <span class="pill ${e.status}">${e.status === 'paid' ? 'Lunas' : 'Belum Lunas'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('eventList').innerHTML = DB.getAnnouncements().map(a => {
+    const c = annColor(a.color);
+    return `<div class="event-row"><div class="dot" style="background:${c.bg}; color:${c.fg};">${a.icon}</div><div class="txt"><b>${a.title}</b><span>${a.description}</span></div></div>`;
+  }).join('') || '<p class="secondary">Belum ada pengumuman.</p>';
+}
+
+function renderHistory() {
+  const tx = DB.getTransactions();
+  document.getElementById('txBody').innerHTML = tx.map(t => `
+    <tr><td data-label="Tanggal">${formatDT(t.date)}</td><td data-label="Kategori">${t.category}</td><td data-label="Keterangan">${t.description}</td>
+      <td data-label="Jenis"><span class="tag-pill" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">${t.type === 'income' ? 'Masuk' : 'Keluar'}</span></td>
+      <td data-label="Jumlah">${formatIDR(t.amount)}</td></tr>`).join('');
+
+  document.getElementById('myWeeklyBody').innerHTML = myWeekly.map(e => `
+    <tr><td data-label="Minggu">${e.week}</td><td data-label="Nominal">${formatIDR(e.amount)}</td>
+      <td data-label="Status"><span class="status-badge ${e.status}">${e.status === 'paid' ? 'Sudah Bayar' : 'Belum Bayar'}</span></td>
+      <td data-label="Tgl Bayar">${formatDT(e.paidDate)}</td></tr>`).join('');
+}
+
+function renderRightPanel() {
+  document.getElementById('rpThisWeek').textContent = currentEntry ? (currentEntry.status === 'paid' ? 'Lunas' : 'Belum Lunas') : '—';
+  document.getElementById('rpPaidTotal').textContent = myWeekly.filter(e => e.status === 'paid').length;
+  document.getElementById('rpUnpaidTotal').textContent = myWeekly.filter(e => e.status === 'unpaid').length;
+}
+
+renderStatusCard();
+renderOverview();
+renderHistory();
+renderRightPanel();
+
+document.getElementById('pwForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const a = document.getElementById('newPw').value, b = document.getElementById('confirmPw').value;
+  if (a !== b) { toast('Konfirmasi kata sandi tidak cocok'); return; }
+  const ok = await DB.changePassword(user.id, a);
+  e.target.reset();
+  closeModal('pwModal');
+  toast(ok ? 'Kata sandi berhasil diubah' : 'Gagal mengubah kata sandi');
+});
+
+document.querySelectorAll('.menu-row .navicon').forEach((el, i) => { el.innerHTML = i === 0 ? ICONS.key : ICONS.logout; });
+document.querySelectorAll('.ic-bell').forEach(el => el.innerHTML = ICONS.bell);
+document.querySelectorAll('.ic-x').forEach(el => el.innerHTML = ICONS.x);
+
+})().catch(err => console.error('Student dashboard failed to load:', err));
+</script>
+</body>
+</html>

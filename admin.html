@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Admin — Kas Kelas</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="app-header">
+    <p class="greet">Selamat datang, <b id="greetName">Admin</b></p>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="toggleTheme()"><span id="themeToggleIcon"></span></button>
+      <button class="icon-btn" title="Notifikasi"><span class="ic-bell"></span></button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+    <div class="main-scroll">
+      <div class="content-columns">
+        <div style="flex:1; min-width:0;">
+
+          <!-- OVERVIEW -->
+          <section class="view-section" id="view-overview">
+            <div class="hero-banner">
+              <div class="label">Saldo Kas Kelas</div>
+              <div class="amount" id="heroBalance">Rp0</div>
+              <div class="sub-row">
+                <span>Pemasukan<b id="heroIncome">Rp0</b></span>
+                <span>Pengeluaran<b id="heroExpense">Rp0</b></span>
+              </div>
+            </div>
+
+            <div class="section-title">Minggu Iuran <span class="tag">6 minggu terakhir</span></div>
+            <div class="hscroll" id="scheduleRow"></div>
+
+            <div class="section-title">Aktivitas Terbaru</div>
+            <div class="event-list" id="recentActivity"></div>
+
+            <div class="section-title">Rekap Berdasarkan Periode</div>
+            <div class="toolbar">
+              <button class="chip active" data-range="week">Minggu Ini</button>
+              <button class="chip" data-range="month">Bulan Ini</button>
+              <button class="chip" data-range="all">Semua</button>
+            </div>
+            <div class="panel">
+              <div class="stat-row"><span>Total Pemasukan</span><b id="rangeIncome">Rp0</b></div>
+              <div class="stat-row"><span>Total Pengeluaran</span><b id="rangeExpense">Rp0</b></div>
+              <div class="stat-row"><span>Selisih</span><b id="rangeNet">Rp0</b></div>
+            </div>
+          </section>
+
+          <!-- WEEKLY TRACKING -->
+          <section class="view-section" id="view-tracking">
+            <div class="row-between">
+              <div class="section-title mt-0">Pelacakan Iuran Mingguan</div>
+            </div>
+            <div class="toolbar">
+              <select class="select-input" id="weekSelect"></select>
+              <button class="btn-mini coral" onclick="openModal('weekModal')"><span class="ic-plus"></span>Tambah Minggu</button>
+              <button class="btn-mini mustard" onclick="doExportTrackingXLSX()"><span class="ic-dl"></span>Excel</button>
+              <button class="btn-mini coral" onclick="doExportTrackingPDF()"><span class="ic-dl"></span>PDF</button>
+            </div>
+            <div class="panel" style="padding:14px 18px; display:flex; gap:20px;">
+              <div><span class="secondary" style="font-size:12px;">Sudah Bayar</span><div style="font-weight:800; font-size:18px;" id="paidCount">0</div></div>
+              <div><span class="secondary" style="font-size:12px;">Belum Bayar</span><div style="font-weight:800; font-size:18px;" id="unpaidCount">0</div></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nama Siswa</th><th>Nominal</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="trackingBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- TRANSACTIONS -->
+          <section class="view-section" id="view-transactions">
+            <div class="row-between">
+              <div class="section-title mt-0">Riwayat Transaksi</div>
+              <button class="btn-mini coral" onclick="openModal('txModal')"><span class="ic-plus"></span>Tambah</button>
+            </div>
+            <div class="toolbar">
+              <button class="chip active" data-txfilter="all">Semua</button>
+              <button class="chip" data-txfilter="income">Pemasukan</button>
+              <button class="chip" data-txfilter="expense">Pengeluaran</button>
+              <button class="btn-mini mustard" onclick="doExportTxXLSX()"><span class="ic-dl"></span>Excel</button>
+              <button class="btn-mini coral" onclick="doExportTxPDF()"><span class="ic-dl"></span>PDF</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tanggal</th><th>Kategori</th><th>Keterangan</th><th>Jenis</th><th>Jumlah</th><th>Aksi</th></tr></thead>
+                <tbody id="txBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ANNOUNCEMENTS -->
+          <section class="view-section" id="view-announcements">
+            <div class="row-between">
+              <div class="section-title mt-0">Pengumuman &amp; Agenda Kelas</div>
+              <button class="btn-mini coral" onclick="openAnnModal()"><span class="ic-plus"></span>Tambah</button>
+            </div>
+            <p class="secondary" style="font-size:13px; margin-top:-6px;">Tampil di halaman Beranda semua siswa.</p>
+            <div class="event-list" id="annList"></div>
+          </section>
+
+          <!-- ACCOUNT -->
+          <section class="view-section" id="view-account">
+            <div class="section-title mt-0">Akun Saya</div>
+            <div class="panel profile-card">
+              <div class="avatar" id="avatarInitial">A</div>
+              <div>
+                <h4 id="profileName">—</h4>
+                <span id="profileEmail">—</span>
+              </div>
+            </div>
+            <div class="panel" style="padding:6px 16px;">
+              <button class="menu-row" onclick="openModal('pwModal')"><span class="navicon"></span>Ubah Kata Sandi</button>
+              <button class="menu-row" onclick="doLogout()"><span class="navicon"></span>Keluar</button>
+            </div>
+          </section>
+
+        </div>
+
+        <aside class="right-panel">
+          <div class="panel">
+            <h4>Ringkasan Cepat</h4>
+            <div class="stat-row"><span>Total Siswa</span><b id="rpStudents">0</b></div>
+            <div class="stat-row"><span>Sudah Bayar Mgg Ini</span><b id="rpPaidThisWeek">0</b></div>
+            <div class="stat-row"><span>Belum Bayar Mgg Ini</span><b id="rpUnpaidThisWeek">0</b></div>
+          </div>
+          <div class="panel">
+            <h4>Perlu Ditagih</h4>
+            <div class="event-list" id="rpUnpaidList"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" id="bottomNav"></nav>
+  </div>
+</div>
+
+<!-- Add transaction modal -->
+<div class="modal-overlay" id="txModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Tambah Transaksi</h3><button class="modal-close" onclick="closeModal('txModal')"><span class="ic-x"></span></button></div>
+    <form id="txForm">
+      <div class="form-grid">
+        <div class="full">
+          <label>Jenis</label>
+          <select id="txType"><option value="income">Pemasukan</option><option value="expense">Pengeluaran</option></select>
+        </div>
+        <div class="full">
+          <label>Kategori</label>
+          <input type="text" id="txCategory" placeholder="Contoh: Perlengkapan Kelas" required>
+        </div>
+        <div class="full">
+          <label>Keterangan</label>
+          <input type="text" id="txDesc" placeholder="Deskripsi singkat" required>
+        </div>
+        <div class="full">
+          <label>Jumlah (Rp)</label>
+          <input type="number" id="txAmount" placeholder="0" required min="1">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:16px;">Simpan</button>
+    </form>
+  </div>
+</div>
+
+<!-- Add new tracking week modal -->
+<div class="modal-overlay" id="weekModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Tambah Minggu Iuran</h3><button class="modal-close" onclick="closeModal('weekModal')"><span class="ic-x"></span></button></div>
+    <p class="secondary" style="font-size:13px; margin-top:-6px;">Membuat entri iuran baru untuk semua siswa pada minggu ini, berstatus belum bayar.</p>
+    <form id="weekForm">
+      <div class="form-grid">
+        <div class="full">
+          <label>Nama / Label Minggu</label>
+          <input type="text" id="weekName" placeholder="Contoh: Minggu 30 atau 2026-07-27" required>
+        </div>
+        <div class="full">
+          <label>Nominal per Siswa (Rp)</label>
+          <input type="number" id="weekAmount" placeholder="5000" value="5000" required min="1">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:16px;">Buat Minggu</button>
+    </form>
+  </div>
+</div>
+
+<!-- Add/edit announcement modal -->
+<div class="modal-overlay" id="annModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="annModalTitle">Tambah Pengumuman</h3><button class="modal-close" onclick="closeModal('annModal')"><span class="ic-x"></span></button></div>
+    <form id="annForm">
+      <input type="hidden" id="annId">
+      <div class="form-grid">
+        <div class="full">
+          <label>Judul</label>
+          <input type="text" id="annTitle" placeholder="Contoh: Pertemuan Wali Kelas" required maxlength="80">
+        </div>
+        <div class="full">
+          <label>Keterangan</label>
+          <input type="text" id="annDesc" placeholder="Contoh: Minggu depan · Aula Sekolah" required maxlength="120">
+        </div>
+        <div>
+          <label>Ikon (emoji)</label>
+          <input type="text" id="annIcon" placeholder="📌" maxlength="4" value="📌">
+        </div>
+        <div>
+          <label>Warna</label>
+          <select id="annColor">
+            <option value="mustard">Kuning</option>
+            <option value="sage">Hijau</option>
+            <option value="coral">Merah Muda</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:16px;">Simpan Pengumuman</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change password modal -->
+<div class="modal-overlay" id="pwModal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Ubah Kata Sandi</h3><button class="modal-close" onclick="closeModal('pwModal')"><span class="ic-x"></span></button></div>
+    <form id="pwForm">
+      <div class="form-grid">
+        <div class="full"><label>Kata Sandi Baru</label><input type="password" id="newPw" minlength="4" required></div>
+        <div class="full"><label>Konfirmasi Kata Sandi</label><input type="password" id="confirmPw" minlength="4" required></div>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:16px;">Simpan Kata Sandi</button>
+    </form>
+  </div>
+</div>
+
+<!-- Hidden print templates -->
+<div style="display:none;">
+  <div id="printTracking"></div>
+  <div id="printTx"></div>
+</div>
+
+<script src="assets/js/api.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+(async function main() {
+const user = await requireAuth('admin');
+if (!user) return;
+let currentWeek = null;
+let txFilter = 'all';
+
+document.getElementById('greetName').textContent = user.name.split(' ')[0];
+document.getElementById('themeToggleIcon').innerHTML =
+  document.documentElement.getAttribute('data-theme') === 'dark' ? ICONS.sun : ICONS.moon;
+document.getElementById('profileName').textContent = user.name;
+document.getElementById('profileEmail').textContent = user.email;
+document.getElementById('avatarInitial').textContent = user.name.charAt(0);
+
+renderNav('overview', 'admin');
+renderOverview();
+renderTrackingWeekOptions();
+renderTracking();
+renderTransactions();
+renderAnnouncements();
+renderRightPanel();
+
+function renderOverview() {
+  const tx = DB.getTransactions();
+  const income = tx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = tx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  document.getElementById('heroBalance').textContent = formatIDR(income - expense);
+  document.getElementById('heroIncome').textContent = formatIDR(income);
+  document.getElementById('heroExpense').textContent = formatIDR(expense);
+
+  const weeks = DB.weeksList();
+  const scheduleRow = document.getElementById('scheduleRow');
+  scheduleRow.innerHTML = weeks.map(w => {
+    const entries = DB.weeklyForWeek(w);
+    const paid = entries.filter(e => e.status === 'paid').length;
+    const d = entries[0] ? new Date(entries[0].weekDate) : new Date();
+    return `<div class="schedule-card">
+      <div class="dow">${w}</div>
+      <div class="date">${d.getDate()}/${d.getMonth() + 1}</div>
+      <div class="desc">${paid}/${entries.length} siswa bayar</div>
+      <span class="pill ${paid === entries.length ? 'paid' : 'unpaid'}">${paid === entries.length ? 'Lunas' : 'Belum Lunas'}</span>
+    </div>`;
+  }).join('');
+
+  const recent = document.getElementById('recentActivity');
+  recent.innerHTML = tx.slice(0, 5).map(t => `
+    <div class="event-row">
+      <div class="dot" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">
+        ${t.type === 'income' ? '↑' : '↓'}
+      </div>
+      <div class="txt"><b>${t.category}</b><span>${formatDT(t.date)} · ${t.description}</span></div>
+      <b style="margin-left:auto; font-size:13px; color:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}">${t.type === 'income' ? '+' : '-'}${formatIDR(t.amount)}</b>
+    </div>`).join('') || '<p class="secondary">Belum ada transaksi.</p>';
+
+  applyRangeFilter('week');
+  document.querySelectorAll('[data-range]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyRangeFilter(btn.dataset.range);
+    });
+  });
+}
+
+function applyRangeFilter(range) {
+  const tx = DB.getTransactions();
+  const now = new Date();
+  const filtered = tx.filter(t => {
+    const d = new Date(t.date);
+    if (range === 'week') return (now - d) / 86400000 <= 7;
+    if (range === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return true;
+  });
+  const income = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  document.getElementById('rangeIncome').textContent = formatIDR(income);
+  document.getElementById('rangeExpense').textContent = formatIDR(expense);
+  document.getElementById('rangeNet').textContent = formatIDR(income - expense);
+}
+
+function renderTrackingWeekOptions() {
+  const weeks = DB.weeksList();
+  currentWeek = weeks[0];
+  const sel = document.getElementById('weekSelect');
+  sel.innerHTML = weeks.map(w => `<option value="${w}">${w}</option>`).join('');
+  sel.addEventListener('change', () => { currentWeek = sel.value; renderTracking(); });
+}
+
+function renderTracking() {
+  const entries = DB.weeklyForWeek(currentWeek);
+  const users = DB.getUsers();
+  const rows = entries.map(e => {
+    const student = users.find(u => u.id === e.studentId);
+    return `<tr>
+      <td data-label="Nama Siswa">${student ? student.name : '—'}</td>
+      <td data-label="Nominal">${formatIDR(e.amount)}</td>
+      <td data-label="Status"><span class="status-badge ${e.status}">${e.status === 'paid' ? 'Sudah Bayar' : 'Belum Bayar'}</span></td>
+      <td data-label="Aksi" style="gap:8px; justify-content:flex-end;">
+        <button class="mark-btn ${e.status === 'paid' ? 'is-paid' : ''}" data-mark="${e.id}">${e.status === 'paid' ? 'Batalkan' : 'Tandai Lunas'}</button>
+        <button class="icon-btn danger-btn" data-del-week="${e.id}" title="Hapus entri">${ICONS.trash}</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('trackingBody').innerHTML = rows || '<tr><td colspan="4">Tidak ada data.</td></tr>';
+  document.getElementById('paidCount').textContent = entries.filter(e => e.status === 'paid').length;
+  document.getElementById('unpaidCount').textContent = entries.filter(e => e.status === 'unpaid').length;
+
+  document.querySelectorAll('[data-mark]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      await DB.markPaid(btn.dataset.mark, user.name);
+      renderTracking();
+      renderOverview();
+      renderRightPanel();
+      toast('Status pembayaran diperbarui');
+    });
+  });
+
+  document.querySelectorAll('[data-del-week]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Hapus entri iuran ini? Tindakan ini tidak bisa dibatalkan.')) return;
+      btn.disabled = true;
+      const res = await DB.deleteWeekly(btn.dataset.delWeek);
+      if (res && res.success) {
+        toast('Entri iuran dihapus');
+        renderTrackingWeekOptions();
+        renderTracking();
+        renderRightPanel();
+      } else {
+        toast((res && res.error) || 'Gagal menghapus entri');
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function renderTransactions() {
+  let tx = DB.getTransactions();
+  if (txFilter !== 'all') tx = tx.filter(t => t.type === txFilter);
+  document.getElementById('txBody').innerHTML = tx.map(t => `
+    <tr>
+      <td data-label="Tanggal">${formatDT(t.date)}</td><td data-label="Kategori">${t.category}</td><td data-label="Keterangan">${t.description}</td>
+      <td data-label="Jenis"><span class="tag-pill" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">${t.type === 'income' ? 'Masuk' : 'Keluar'}</span></td>
+      <td data-label="Jumlah">${formatIDR(t.amount)}</td>
+      <td data-label="Aksi"><button class="icon-btn danger-btn" data-del-tx="${t.id}" title="Hapus transaksi">${ICONS.trash}</button></td>
+    </tr>`).join('') || '<tr><td colspan="6">Belum ada transaksi.</td></tr>';
+
+  document.querySelectorAll('[data-del-tx]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.delTx;
+      if (!confirm('Hapus transaksi ini? Tindakan ini tidak bisa dibatalkan.')) return;
+      btn.disabled = true;
+      const res = await DB.deleteTransaction(id);
+      if (res && res.success) {
+        toast('Transaksi berhasil dihapus');
+        renderOverview(); renderTransactions();
+      } else {
+        toast((res && res.error) || 'Gagal menghapus transaksi');
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+document.querySelectorAll('[data-txfilter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-txfilter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    txFilter = btn.dataset.txfilter;
+    renderTransactions();
+  });
+});
+
+function renderAnnouncements() {
+  const anns = DB.getAnnouncements();
+  document.getElementById('annList').innerHTML = anns.map(a => {
+    const c = annColor(a.color);
+    return `<div class="event-row">
+      <div class="dot" style="background:${c.bg}; color:${c.fg};">${a.icon}</div>
+      <div class="txt"><b>${a.title}</b><span>${a.description}</span></div>
+      <div style="margin-left:auto; display:flex; gap:6px;">
+        <button class="icon-btn" data-edit-ann="${a.id}" title="Edit">✏️</button>
+        <button class="icon-btn danger-btn" data-del-ann="${a.id}" title="Hapus">${ICONS.trash}</button>
+      </div>
+    </div>`;
+  }).join('') || '<p class="secondary">Belum ada pengumuman. Klik "Tambah" untuk membuat.</p>';
+
+  document.querySelectorAll('[data-edit-ann]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ann = anns.find(a => String(a.id) === btn.dataset.editAnn);
+      if (ann) openAnnModal(ann);
+    });
+  });
+  document.querySelectorAll('[data-del-ann]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Hapus pengumuman ini?')) return;
+      btn.disabled = true;
+      const res = await DB.deleteAnnouncement(btn.dataset.delAnn);
+      if (res && res.success) { toast('Pengumuman dihapus'); renderAnnouncements(); }
+      else { toast((res && res.error) || 'Gagal menghapus'); btn.disabled = false; }
+    });
+  });
+}
+
+function openAnnModal(ann) {
+  document.getElementById('annModalTitle').textContent = ann ? 'Edit Pengumuman' : 'Tambah Pengumuman';
+  document.getElementById('annId').value = ann ? ann.id : '';
+  document.getElementById('annTitle').value = ann ? ann.title : '';
+  document.getElementById('annDesc').value = ann ? ann.description : '';
+  document.getElementById('annIcon').value = ann ? ann.icon : '📌';
+  document.getElementById('annColor').value = ann ? ann.color : 'mustard';
+  openModal('annModal');
+}
+
+document.getElementById('annForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  const id = document.getElementById('annId').value;
+  const title = document.getElementById('annTitle').value.trim();
+  const description = document.getElementById('annDesc').value.trim();
+  const icon = document.getElementById('annIcon').value.trim() || '📌';
+  const color = document.getElementById('annColor').value;
+  const res = id
+    ? await DB.updateAnnouncement(id, title, description, icon, color)
+    : await DB.addAnnouncement(title, description, icon, color, user.name);
+  submitBtn.disabled = false;
+  if (res && res.success) {
+    e.target.reset();
+    closeModal('annModal');
+    renderAnnouncements();
+    toast(id ? 'Pengumuman diperbarui' : 'Pengumuman ditambahkan');
+  } else {
+    toast((res && res.error) || 'Gagal menyimpan pengumuman');
+  }
+});
+
+function renderRightPanel() {
+  const users = DB.getUsers().filter(u => u.role === 'student');
+  const weeks = DB.weeksList();
+  const thisWeekEntries = DB.weeklyForWeek(weeks[0]);
+  document.getElementById('rpStudents').textContent = users.length;
+  document.getElementById('rpPaidThisWeek').textContent = thisWeekEntries.filter(e => e.status === 'paid').length;
+  document.getElementById('rpUnpaidThisWeek').textContent = thisWeekEntries.filter(e => e.status === 'unpaid').length;
+
+  const unpaid = thisWeekEntries.filter(e => e.status === 'unpaid');
+  document.getElementById('rpUnpaidList').innerHTML = unpaid.slice(0, 5).map(e => {
+    const student = users.find(u => u.id === e.studentId);
+    return `<div class="event-row"><div class="dot" style="background:var(--accent-coral); color:white;">!</div><div class="txt"><b>${student ? student.name : '—'}</b><span>Belum bayar minggu ini</span></div></div>`;
+  }).join('') || '<p class="secondary" style="font-size:13px;">Semua siswa sudah lunas 🎉</p>';
+}
+
+document.getElementById('txForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  await DB.addTransaction(
+    document.getElementById('txType').value,
+    document.getElementById('txCategory').value,
+    document.getElementById('txDesc').value,
+    document.getElementById('txAmount').value,
+    user.name
+  );
+  submitBtn.disabled = false;
+  e.target.reset();
+  closeModal('txModal');
+  renderOverview(); renderTransactions();
+  toast('Transaksi berhasil ditambahkan');
+});
+
+document.getElementById('weekForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  const week = document.getElementById('weekName').value.trim();
+  const amount = document.getElementById('weekAmount').value;
+  const res = await DB.addWeek(week, amount, user.name);
+  submitBtn.disabled = false;
+  if (res && res.success) {
+    e.target.reset();
+    document.getElementById('weekAmount').value = 5000;
+    closeModal('weekModal');
+    renderTrackingWeekOptions();
+    renderTracking();
+    renderRightPanel();
+    toast('Minggu baru berhasil dibuat');
+  } else {
+    toast((res && res.error) || 'Gagal membuat minggu baru');
+  }
+});
+
+document.getElementById('pwForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const a = document.getElementById('newPw').value, b = document.getElementById('confirmPw').value;
+  if (a !== b) { toast('Konfirmasi kata sandi tidak cocok'); return; }
+  const ok = await DB.changePassword(user.id, a);
+  e.target.reset();
+  closeModal('pwModal');
+  toast(ok ? 'Kata sandi berhasil diubah' : 'Gagal mengubah kata sandi');
+});
+
+function doExportTrackingXLSX() {
+  const entries = DB.weeklyForWeek(currentWeek);
+  const users = DB.getUsers();
+  const rows = [['Nama Siswa', 'Minggu', 'Nominal', 'Status', 'Tanggal Bayar']];
+  entries.forEach(e => {
+    const s = users.find(u => u.id === e.studentId);
+    rows.push([s ? s.name : '—', e.week, e.amount, e.status === 'paid' ? 'Sudah Bayar' : 'Belum Bayar', formatDT(e.paidDate)]);
+  });
+  exportXLSX(`rekap-iuran-${currentWeek}.xlsx`, 'Iuran Mingguan', rows);
+}
+
+function doExportTrackingPDF() {
+  const entries = DB.weeklyForWeek(currentWeek);
+  const users = DB.getUsers();
+  const rows = entries.map(e => {
+    const s = users.find(u => u.id === e.studentId);
+    return `<tr><td>${s ? s.name : '—'}</td><td>${formatIDR(e.amount)}</td><td>${e.status === 'paid' ? 'Sudah Bayar' : 'Belum Bayar'}</td></tr>`;
+  }).join('');
+  document.getElementById('printTracking').innerHTML = `<h2>Rekap Iuran Mingguan — ${currentWeek}</h2>
+    <table><thead><tr><th>Nama</th><th>Nominal</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+  exportPDF('printTracking');
+}
+
+function doExportTxXLSX() {
+  const tx = DB.getTransactions();
+  const rows = [['Tanggal', 'Kategori', 'Keterangan', 'Jenis', 'Jumlah']];
+  tx.forEach(t => rows.push([formatDT(t.date), t.category, t.description, t.type === 'income' ? 'Pemasukan' : 'Pengeluaran', t.amount]));
+  exportXLSX('rekap-transaksi.xlsx', 'Transaksi', rows);
+}
+
+function doExportTxPDF() {
+  const tx = DB.getTransactions();
+  const rows = tx.map(t => `<tr><td>${formatDT(t.date)}</td><td>${t.category}</td><td>${t.description}</td><td>${t.type === 'income' ? 'Masuk' : 'Keluar'}</td><td>${formatIDR(t.amount)}</td></tr>`).join('');
+  document.getElementById('printTx').innerHTML = `<h2>Rekap Transaksi Kas Kelas</h2>
+    <table><thead><tr><th>Tanggal</th><th>Kategori</th><th>Keterangan</th><th>Jenis</th><th>Jumlah</th></tr></thead><tbody>${rows}</tbody></table>`;
+  exportPDF('printTx');
+}
+
+document.querySelectorAll('.menu-row .navicon').forEach((el, i) => {
+  el.innerHTML = i === 0 ? ICONS.key : ICONS.logout;
+});
+document.querySelectorAll('.ic-bell').forEach(el => el.innerHTML = ICONS.bell);
+document.querySelectorAll('.ic-dl').forEach(el => el.innerHTML = ICONS.download);
+document.querySelectorAll('.ic-plus').forEach(el => el.innerHTML = ICONS.plus);
+document.querySelectorAll('.ic-x').forEach(el => el.innerHTML = ICONS.x);
+
+// Expose functions referenced by inline onclick="" attributes (those run
+// in global scope, but everything above lives inside this async IIFE).
+window.doExportTrackingXLSX = doExportTrackingXLSX;
+window.doExportTrackingPDF = doExportTrackingPDF;
+window.doExportTxXLSX = doExportTxXLSX;
+window.doExportTxPDF = doExportTxPDF;
+
+})().catch(err => console.error('Admin dashboard failed to load:', err));
+</script>
+</body>
+</html>
