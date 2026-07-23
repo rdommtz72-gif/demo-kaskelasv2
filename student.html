@@ -178,7 +178,7 @@ function renderHistory() {
   const tx = DB.getTransactions();
   document.getElementById('txBody').innerHTML = tx.map(t => `
     <tr><td data-label="Tanggal">${formatDT(t.date)}</td><td data-label="Kategori">${t.category}</td><td data-label="Keterangan">${t.description}</td>
-      <td data-label="Jenis"><span class="tag-pill" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">${t.type === 'income' ? 'Masuk' : 'Keluar'}</span></td>
+      <td data-label="Jenis"><span class="tag-pill" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-danger)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">${t.type === 'income' ? 'Masuk' : 'Keluar'}</span></td>
       <td data-label="Jumlah">${formatIDR(t.amount)}</td></tr>`).join('');
 
   document.getElementById('myWeeklyBody').innerHTML = myWeekly.map(e => `
