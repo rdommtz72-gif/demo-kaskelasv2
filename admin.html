@@ -297,11 +297,11 @@ function renderOverview() {
   const recent = document.getElementById('recentActivity');
   recent.innerHTML = tx.slice(0, 5).map(t => `
     <div class="event-row">
-      <div class="dot" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">
+      <div class="dot" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-danger)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">
         ${t.type === 'income' ? '↑' : '↓'}
       </div>
       <div class="txt"><b>${t.category}</b><span>${formatDT(t.date)} · ${t.description}</span></div>
-      <b style="margin-left:auto; font-size:13px; color:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}">${t.type === 'income' ? '+' : '-'}${formatIDR(t.amount)}</b>
+      <b style="margin-left:auto; font-size:13px; color:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-danger)'}">${t.type === 'income' ? '+' : '-'}${formatIDR(t.amount)}</b>
     </div>`).join('') || '<p class="secondary">Belum ada transaksi.</p>';
 
   applyRangeFilter('week');
@@ -392,7 +392,7 @@ function renderTransactions() {
   document.getElementById('txBody').innerHTML = tx.map(t => `
     <tr>
       <td data-label="Tanggal">${formatDT(t.date)}</td><td data-label="Kategori">${t.category}</td><td data-label="Keterangan">${t.description}</td>
-      <td data-label="Jenis"><span class="tag-pill" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-coral)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">${t.type === 'income' ? 'Masuk' : 'Keluar'}</span></td>
+      <td data-label="Jenis"><span class="tag-pill" style="background:${t.type === 'income' ? 'var(--accent-sage)' : 'var(--accent-danger)'}; color:${t.type === 'income' ? '#1d3527' : 'white'};">${t.type === 'income' ? 'Masuk' : 'Keluar'}</span></td>
       <td data-label="Jumlah">${formatIDR(t.amount)}</td>
       <td data-label="Aksi"><button class="icon-btn danger-btn" data-del-tx="${t.id}" title="Hapus transaksi">${ICONS.trash}</button></td>
     </tr>`).join('') || '<tr><td colspan="6">Belum ada transaksi.</td></tr>';
@@ -498,7 +498,7 @@ function renderRightPanel() {
   const unpaid = thisWeekEntries.filter(e => e.status === 'unpaid');
   document.getElementById('rpUnpaidList').innerHTML = unpaid.slice(0, 5).map(e => {
     const student = users.find(u => u.id === e.studentId);
-    return `<div class="event-row"><div class="dot" style="background:var(--accent-coral); color:white;">!</div><div class="txt"><b>${student ? student.name : '—'}</b><span>Belum bayar minggu ini</span></div></div>`;
+    return `<div class="event-row"><div class="dot" style="background:var(--accent-danger); color:white;">!</div><div class="txt"><b>${student ? student.name : '—'}</b><span>Belum bayar minggu ini</span></div></div>`;
   }).join('') || '<p class="secondary" style="font-size:13px;">Semua siswa sudah lunas 🎉</p>';
 }
 
