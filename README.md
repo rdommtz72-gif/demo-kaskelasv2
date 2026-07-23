@@ -11,7 +11,7 @@ Buat Google Sheet baru (atau biarkan `setup.gs` yang membuatkan tab-nya —
 lihat langkah 3). Dibutuhkan tepat tiga tab berikut:
 
 **Users**
-| id | name | email | password | role | class |
+| id | name | userid | password | role | class |
 |----|------|-------|----------|------|-------|
 | u-admin | Bu Sari Wulandari | admin@kelas.com | admin123 | admin | XII IPA 1 |
 | u-1 | Andi Pratama | siswa1@kelas.com | siswa123 | student | XII IPA 1 |
@@ -119,7 +119,7 @@ Masuk menggunakan akun demo yang sudah di-seed:
 |---|---|---|---|
 | GET | `?action=bootstrap` | – | `{ users, transactions, weekly }` (password dihilangkan) |
 | GET | `?action=ping` | – | `{ ok: true, time }` |
-| POST | `login` | `email, password` | objek user (tanpa password) atau `{error}` |
+| POST | `login` | `userid, password` | objek user (tanpa password) atau `{error}` |
 | POST | `addTransaction` | `type, category, description, amount, by` | `{success, transaction}` |
 | POST | `markPaid` | `id, adminName` | `{success}` — mengubah status lunas/belum lunas |
 | POST | `changePassword` | `userId, newPassword` | `{success}` |
