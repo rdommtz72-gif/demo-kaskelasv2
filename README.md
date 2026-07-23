@@ -105,13 +105,13 @@ Masuk menggunakan akun demo yang sudah di-seed:
 
 ## 6. Deploy Frontend (GitHub → Vercel)
 
-1. Push folder ini ke repo GitHub.
-2. Di Vercel: **New Project → Import** repo tersebut.
-3. Framework preset: **Other** (ini HTML statis, tanpa proses build).
-4. Deploy. Vercel akan menyajikan `index.html`, `admin.html`,
+1. Push/upload folder ini ke repo GitHub Repository.
+2. Buka Github, kemudian login atau buat akun (bagi yang belum pernah menggunakan)
+3. Buat repository baru, kemudian upload file yang tersedia.
+4. Di Vercel: **New Project → Import** repo tersebut.
+5. Framework preset: **Other** (ini HTML statis, tanpa proses build).
+6. Deploy. Vercel akan menyajikan `index.html`, `admin.html`,
    `student.html`, dan `assets/` apa adanya.
-5. Karena `API_URL` sudah tertanam langsung di `assets/js/api.js`, lakukan
-   redeploy (atau cukup push commit baru) setiap kali Anda mengubahnya.
 
 ## Referensi API
 
