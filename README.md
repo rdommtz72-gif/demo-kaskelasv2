@@ -50,7 +50,7 @@ tab Users, dan `status` diisi `paid` atau `unpaid`.
    - Alternatif lain: di editor Apps Script, pilih fungsi `setupDatabase`
      dari dropdown fungsi lalu klik **Run** (berikan izin akses saat diminta).
 
-## 3. Deploy API sebagai Web App
+## 3. Deploy API sebagai "Web App"
 
 1. Di editor Apps Script: **Deploy → New deployment**.
 2. Klik ikon gerigi di samping "Select type" → pilih **Web app**.
@@ -87,7 +87,7 @@ request" yang melewati preflight), dan di sisi server (`doPost`)
 ini menjadi `application/json` atau menambahkan header kustom, karena
 permintaan akan mulai gagal dengan error CORS.
 
-## 5. Uji Coba secara Lokal
+## 5. Uji Coba secara Lokal (opsional, bisa skip)
 
 Karena ini file statis biasa, Anda bisa langsung membuka `index.html` di
 browser, atau menjalankan folder ini secara lokal agar path relatifnya
